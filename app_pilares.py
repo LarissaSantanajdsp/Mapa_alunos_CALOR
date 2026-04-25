@@ -94,7 +94,7 @@ if aluno_selecionado_url:
                 ))
             
             fig.update_layout(
-                height=700,
+                height=750,
                 polar=dict(
                     bgcolor=BG_COLOR,
                     radialaxis=dict(
@@ -102,15 +102,20 @@ if aluno_selecionado_url:
                         range=[0, 5.5], 
                         tickvals=[1, 2, 3, 4, 5], 
                         tickfont=dict(size=14, color=TEXT_COLOR, family="Arial Black"),
-                        angle=45, # Move a escala para a lateral (45 graus)
-                        tickangle=0
+                        angle=22.5, # Ângulo seguro para a escala lateral
+                        gridcolor="rgba(78, 44, 28, 0.2)"
                     ),
-                    angularaxis=dict(tickfont=dict(size=20, family="Arial Black"), rotation=90, direction="clockwise")
+                    angularaxis=dict(
+                        tickfont=dict(size=20, family="Arial Black"), 
+                        rotation=90, 
+                        direction="clockwise",
+                        gridcolor="rgba(78, 44, 28, 0.2)"
+                    )
                 ),
                 legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5, font=dict(size=16)),
                 paper_bgcolor=BG_COLOR,
                 plot_bgcolor=BG_COLOR,
-                margin=dict(l=50, r=50, t=50, b=100)
+                margin=dict(l=80, r=80, t=50, b=100)
             )
             st.plotly_chart(fig, use_container_width=True)
             st.info("💡 Este é o seu gráfico interativo. Você pode clicar na legenda para filtrar os textos ou passar o mouse para ver as notas.")
@@ -203,10 +208,10 @@ if st.session_state.alunos_pilares:
                     color = CORES_CALOR_REFINADA[i % len(CORES_CALOR_REFINADA)]
                     fig.add_trace(go.Scatterpolar(r=[c, im, v, co, c], theta=pilares + [pilares[0]], fill='toself', name=nome, line=dict(color=color, width=3)))
                 fig.update_layout(
-                    height=450, 
+                    height=500, 
                     polar=dict(
                         bgcolor=BG_COLOR, 
-                        radialaxis=dict(range=[0, 5.5], tickvals=[1, 2, 3, 4, 5], angle=45)
+                        radialaxis=dict(range=[0, 5.5], tickvals=[1, 2, 3, 4, 5], angle=22.5)
                     ), 
                     showlegend=True, 
                     paper_bgcolor=BG_COLOR
