@@ -16,19 +16,19 @@ TEXT_COLOR = '#4E2C1C'
 ACCENT_COLOR = '#E65100'
 SECONDARY_COLOR = '#8B4513'
 
-# Paleta Expandida Movimento Calor (Maior Contraste)
-# Selecionamos tons que variam entre laranja vibrante, marrom profundo, ocre, terracota e siena
-CORES_CALOR_EXPANDIDA = [
-    '#E65100', # Laranja Forte (Original)
-    '#4E2C1C', # Marrom Café (Contraste Máximo)
+# Paleta Refinada Movimento Calor (Contraste Máximo)
+# Substituímos tons redundantes por cores que mantêm a sofisticação mas são visualmente distintas
+CORES_CALOR_REFINADA = [
+    '#E65100', # Laranja Vibrante
+    '#2E7D32', # Verde Floresta (Contraste de cor)
+    '#4E2C1C', # Marrom Café Profundo
+    '#1565C0', # Azul Oceano (Contraste de cor)
     '#D4A574', # Bege Dourado
-    '#C85A17', # Terracota
-    '#8B4513', # Marrom Sela
-    '#FF8F00', # Âmbar Vibrante
-    '#5D4037', # Marrom Acinzentado
-    '#BF360C', # Vermelho Tijolo
-    '#A1887F', # Marrom Rosado
-    '#6D4C41'  # Marrom Médio
+    '#C62828', # Vermelho Intenso
+    '#FF8F00', # Âmbar/Amarelo Queimado
+    '#6A1B9A', # Roxo Berinjela
+    '#AD1457', # Rosa Velho/Bordô
+    '#37474F'  # Cinza Azulado Escuro
 ]
 
 # Arquivo de armazenamento de dados
@@ -290,16 +290,16 @@ if st.session_state.alunos_pilares and any(st.session_state.alunos_pilares.value
                 angles = np.linspace(0, 2 * np.pi, num_pilares, endpoint=False).tolist()
                 angles += angles[:1]  # Fechar o polígono
                 
-                # Cores para os textos usando a paleta expandida
-                colors = [CORES_CALOR_EXPANDIDA[i % len(CORES_CALOR_EXPANDIDA)] for i in range(len(pontos))]
+                # Cores para os textos usando a paleta refinada
+                colors = [CORES_CALOR_REFINADA[i % len(CORES_CALOR_REFINADA)] for i in range(len(pontos))]
                 
                 # Plotar cada texto
                 for (nome_texto, clareza, impacto, visao, conexao), color in zip(pontos, colors):
                     valores = [clareza, impacto, visao, conexao]
                     valores += valores[:1]  # Fechar o polígono
                     
-                    ax.plot(angles, valores, 'o-', linewidth=2.5, label=nome_texto[:26], color=color)
-                    ax.fill(angles, valores, alpha=0.1, color=color)
+                    ax.plot(angles, valores, 'o-', linewidth=3, label=nome_texto[:26], color=color)
+                    ax.fill(angles, valores, alpha=0.05, color=color)
                 
                 # Configurações do gráfico
                 ax.set_xticks(angles[:-1])
@@ -341,14 +341,14 @@ if st.session_state.alunos_pilares and any(st.session_state.alunos_pilares.value
             
             for ax, (aluno, pontos) in zip(axes, alunos_com_dados):
                 ax.set_facecolor(BG_COLOR)
-                colors = [CORES_CALOR_EXPANDIDA[i % len(CORES_CALOR_EXPANDIDA)] for i in range(len(pontos))]
+                colors = [CORES_CALOR_REFINADA[i % len(CORES_CALOR_REFINADA)] for i in range(len(pontos))]
                 
                 for (nome_texto, clareza, impacto, visao, conexao), color in zip(pontos, colors):
                     valores = [clareza, impacto, visao, conexao]
                     valores += valores[:1]
                     
-                    ax.plot(angles, valores, 'o-', linewidth=2.5, label=nome_texto[:26], color=color)
-                    ax.fill(angles, valores, alpha=0.1, color=color)
+                    ax.plot(angles, valores, 'o-', linewidth=3, label=nome_texto[:26], color=color)
+                    ax.fill(angles, valores, alpha=0.05, color=color)
                 
                 ax.set_xticks(angles[:-1])
                 ax.set_xticklabels(pilares, size=11, fontweight='bold', color=TEXT_COLOR)
