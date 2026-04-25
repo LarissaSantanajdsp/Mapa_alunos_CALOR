@@ -16,6 +16,21 @@ TEXT_COLOR = '#4E2C1C'
 ACCENT_COLOR = '#E65100'
 SECONDARY_COLOR = '#8B4513'
 
+# Paleta Expandida Movimento Calor (Maior Contraste)
+# Selecionamos tons que variam entre laranja vibrante, marrom profundo, ocre, terracota e siena
+CORES_CALOR_EXPANDIDA = [
+    '#E65100', # Laranja Forte (Original)
+    '#4E2C1C', # Marrom Café (Contraste Máximo)
+    '#D4A574', # Bege Dourado
+    '#C85A17', # Terracota
+    '#8B4513', # Marrom Sela
+    '#FF8F00', # Âmbar Vibrante
+    '#5D4037', # Marrom Acinzentado
+    '#BF360C', # Vermelho Tijolo
+    '#A1887F', # Marrom Rosado
+    '#6D4C41'  # Marrom Médio
+]
+
 # Arquivo de armazenamento de dados
 DATA_FILE = "/tmp/pilares_data.json"
 
@@ -261,9 +276,6 @@ if st.session_state.alunos_pilares and any(st.session_state.alunos_pilares.value
         
         alunos_com_dados = [(aluno, pontos) for aluno, pontos in st.session_state.alunos_pilares.items() if pontos]
         
-        # Paleta de cores do Movimento Calor
-        cores_calor = ['#E65100', '#8B4513', '#D4A574', '#C85A17', '#A0522D']
-        
         for idx, (aluno, pontos) in enumerate(alunos_com_dados):
             with cols_display[idx % len(cols_display)]:
                 # Criar figura de radar
@@ -278,28 +290,25 @@ if st.session_state.alunos_pilares and any(st.session_state.alunos_pilares.value
                 angles = np.linspace(0, 2 * np.pi, num_pilares, endpoint=False).tolist()
                 angles += angles[:1]  # Fechar o polígono
                 
-                # Cores para os textos
-                colors = [cores_calor[i % len(cores_calor)] for i in range(len(pontos))]
+                # Cores para os textos usando a paleta expandida
+                colors = [CORES_CALOR_EXPANDIDA[i % len(CORES_CALOR_EXPANDIDA)] for i in range(len(pontos))]
                 
                 # Plotar cada texto
                 for (nome_texto, clareza, impacto, visao, conexao), color in zip(pontos, colors):
                     valores = [clareza, impacto, visao, conexao]
                     valores += valores[:1]  # Fechar o polígono
                     
-                    ax.plot(angles, valores, 'o-', linewidth=2, label=nome_texto[:26], color=color)
-                    ax.fill(angles, valores, alpha=0.15, color=color)
+                    ax.plot(angles, valores, 'o-', linewidth=2.5, label=nome_texto[:26], color=color)
+                    ax.fill(angles, valores, alpha=0.1, color=color)
                 
                 # Configurações do gráfico
                 ax.set_xticks(angles[:-1])
-                
-                # Ajuste fino dos rótulos para evitar sobreposição
-                # Aumentamos o padding e ajustamos o alinhamento
                 ax.set_xticklabels(pilares, size=12, fontweight='bold', color=TEXT_COLOR)
                 
                 # Afastar os rótulos do centro de forma segura usando padding
                 ax.tick_params(axis='x', pad=25)
                 
-                ax.set_ylim(0, 5.5) # Aumentado para dar mais espaço no topo
+                ax.set_ylim(0, 5.5)
                 ax.set_yticks([1, 2, 3, 4, 5])
                 ax.set_yticklabels(['1', '2', '3', '4', '5'], size=9, color=TEXT_COLOR, alpha=0.7)
                 ax.grid(True, color=TEXT_COLOR, alpha=0.3)
@@ -330,20 +339,16 @@ if st.session_state.alunos_pilares and any(st.session_state.alunos_pilares.value
             angles = np.linspace(0, 2 * np.pi, num_pilares, endpoint=False).tolist()
             angles += angles[:1]
             
-            # Paleta de cores do Movimento Calor
-            cores_calor = ['#E65100', '#8B4513', '#D4A574', '#C85A17', '#A0522D']
-            
             for ax, (aluno, pontos) in zip(axes, alunos_com_dados):
                 ax.set_facecolor(BG_COLOR)
-                # Usar cores da paleta Movimento Calor
-                colors = [cores_calor[i % len(cores_calor)] for i in range(len(pontos))]
+                colors = [CORES_CALOR_EXPANDIDA[i % len(CORES_CALOR_EXPANDIDA)] for i in range(len(pontos))]
                 
                 for (nome_texto, clareza, impacto, visao, conexao), color in zip(pontos, colors):
                     valores = [clareza, impacto, visao, conexao]
                     valores += valores[:1]
                     
-                    ax.plot(angles, valores, 'o-', linewidth=2, label=nome_texto[:26], color=color)
-                    ax.fill(angles, valores, alpha=0.15, color=color)
+                    ax.plot(angles, valores, 'o-', linewidth=2.5, label=nome_texto[:26], color=color)
+                    ax.fill(angles, valores, alpha=0.1, color=color)
                 
                 ax.set_xticks(angles[:-1])
                 ax.set_xticklabels(pilares, size=11, fontweight='bold', color=TEXT_COLOR)
