@@ -102,7 +102,6 @@ if aluno_selecionado_url:
                         range=[0, 5.5], 
                         tickvals=[1, 2, 3, 4, 5], 
                         tickfont=dict(size=14, color=TEXT_COLOR, family="Arial Black"),
-                        angle=22.5, # Ângulo seguro para a escala lateral
                         gridcolor="rgba(78, 44, 28, 0.2)"
                     ),
                     angularaxis=dict(
@@ -211,7 +210,7 @@ if st.session_state.alunos_pilares:
                     height=500, 
                     polar=dict(
                         bgcolor=BG_COLOR, 
-                        radialaxis=dict(range=[0, 5.5], tickvals=[1, 2, 3, 4, 5], angle=22.5)
+                        radialaxis=dict(range=[0, 5.5], tickvals=[1, 2, 3, 4, 5])
                     ), 
                     showlegend=True, 
                     paper_bgcolor=BG_COLOR
