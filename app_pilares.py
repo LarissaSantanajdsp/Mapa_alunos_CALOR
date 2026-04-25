@@ -1,6 +1,5 @@
 import streamlit as st
-import matplotlib.pyplot as plt
-import numpy as np
+import plotly.graph_objects as go
 import pandas as pd
 from io import BytesIO
 import json
@@ -17,12 +16,11 @@ ACCENT_COLOR = '#E65100'
 SECONDARY_COLOR = '#8B4513'
 
 # Paleta Refinada Movimento Calor (Contraste Máximo)
-# Substituímos tons redundantes por cores que mantêm a sofisticação mas são visualmente distintas
 CORES_CALOR_REFINADA = [
     '#E65100', # Laranja Vibrante
-    '#2E7D32', # Verde Floresta (Contraste de cor)
+    '#2E7D32', # Verde Floresta
     '#4E2C1C', # Marrom Café Profundo
-    '#1565C0', # Azul Oceano (Contraste de cor)
+    '#1565C0', # Azul Oceano
     '#D4A574', # Bege Dourado
     '#C62828', # Vermelho Intenso
     '#FF8F00', # Âmbar/Amarelo Queimado
@@ -76,13 +74,11 @@ with st.sidebar:
     st.markdown("""
     1. **Adicione um Aluno:** Digite o nome do aluno.
     2. **Insira um Texto:** Dê um nome ao texto/apresentação.
-    3. **Avalie os Pilares:** Atribua notas (0-5) para cada pilar:
-       - 🔹 **Clareza:** Facilidade de compreensão
-       - 🔹 **Impacto:** Memorabilidade e engajamento
-       - 🔹 **Visão:** Ponto de vista único e filosofia
-       - 🔹 **Conexão:** Argumentos e chamada para ação
-    4. **Visualize o Radar:** O gráfico mostra a evolução em cada pilar.
-    5. **Baixe o Gráfico:** Salve a imagem para análise.
+    3. **Avalie os Pilares:** Atribua notas (0-5) para cada pilar.
+    4. **Interatividade:** 
+       - Passe o mouse sobre os pontos para ver as notas.
+       - Clique na legenda para ocultar/mostrar avaliações.
+       - Clique duas vezes na legenda para isolar uma avaliação.
     
     ---
     
@@ -140,243 +136,110 @@ if st.session_state.alunos_pilares:
                 
                 # Criar colunas para edição
                 cols = st.columns([2, 1, 1, 1, 1, 1])
-                with cols[0]:
-                    st.write("**Nome do Texto**")
-                with cols[1]:
-                    st.write("**Clareza**")
-                with cols[2]:
-                    st.write("**Impacto**")
-                with cols[3]:
-                    st.write("**Visão**")
-                with cols[4]:
-                    st.write("**Conexão**")
-                with cols[5]:
-                    st.write("**Ação**")
+                with cols[0]: st.write("**Nome do Texto**")
+                with cols[1]: st.write("**Clareza**")
+                with cols[2]: st.write("**Impacto**")
+                with cols[3]: st.write("**Visão**")
+                with cols[4]: st.write("**Conexão**")
+                with cols[5]: st.write("**Ação**")
                 
                 # Exibir e permitir edição de cada avaliação
                 for i, (nome_texto, clareza, impacto, visao, conexao) in enumerate(st.session_state.alunos_pilares[aluno]):
                     cols = st.columns([2, 1, 1, 1, 1, 1])
-                    
                     with cols[0]:
-                        novo_nome = st.text_input(
-                            f"Nome T{i+1}",
-                            value=nome_texto,
-                            key=f"nome_edit_{aluno}_{i}",
-                            label_visibility="collapsed"
-                        )
-                    
+                        novo_nome = st.text_input(f"Nome T{i+1}", value=nome_texto, key=f"nome_edit_{aluno}_{i}", label_visibility="collapsed")
                     with cols[1]:
-                        nova_clareza = st.number_input(
-                            f"Clareza T{i+1}",
-                            min_value=0.0,
-                            max_value=5.0,
-                            value=float(clareza),
-                            step=0.5,
-                            key=f"clareza_edit_{aluno}_{i}",
-                            label_visibility="collapsed"
-                        )
-                    
+                        nova_clareza = st.number_input(f"Clareza T{i+1}", min_value=0.0, max_value=5.0, value=float(clareza), step=0.5, key=f"clareza_edit_{aluno}_{i}", label_visibility="collapsed")
                     with cols[2]:
-                        novo_impacto = st.number_input(
-                            f"Impacto T{i+1}",
-                            min_value=0.0,
-                            max_value=5.0,
-                            value=float(impacto),
-                            step=0.5,
-                            key=f"impacto_edit_{aluno}_{i}",
-                            label_visibility="collapsed"
-                        )
-                    
+                        novo_impacto = st.number_input(f"Impacto T{i+1}", min_value=0.0, max_value=5.0, value=float(impacto), step=0.5, key=f"impacto_edit_{aluno}_{i}", label_visibility="collapsed")
                     with cols[3]:
-                        nova_visao = st.number_input(
-                            f"Visão T{i+1}",
-                            min_value=0.0,
-                            max_value=5.0,
-                            value=float(visao),
-                            step=0.5,
-                            key=f"visao_edit_{aluno}_{i}",
-                            label_visibility="collapsed"
-                        )
-                    
+                        nova_visao = st.number_input(f"Visão T{i+1}", min_value=0.0, max_value=5.0, value=float(visao), step=0.5, key=f"visao_edit_{aluno}_{i}", label_visibility="collapsed")
                     with cols[4]:
-                        nova_conexao = st.number_input(
-                            f"Conexão T{i+1}",
-                            min_value=0.0,
-                            max_value=5.0,
-                            value=float(conexao),
-                            step=0.5,
-                            key=f"conexao_edit_{aluno}_{i}",
-                            label_visibility="collapsed"
-                        )
-                    
+                        nova_conexao = st.number_input(f"Conexão T{i+1}", min_value=0.0, max_value=5.0, value=float(conexao), step=0.5, key=f"conexao_edit_{aluno}_{i}", label_visibility="collapsed")
                     with cols[5]:
                         if st.button(f"🗑️", key=f"remove_{aluno}_{i}"):
                             st.session_state.alunos_pilares[aluno].pop(i)
                             salvar_dados(st.session_state.alunos_pilares)
                             st.rerun()
                     
-                    # Atualizar os valores se foram alterados
                     if novo_nome != nome_texto or nova_clareza != clareza or novo_impacto != impacto or nova_visao != visao or nova_conexao != conexao:
                         st.session_state.alunos_pilares[aluno][i] = (novo_nome, nova_clareza, novo_impacto, nova_visao, nova_conexao)
                         salvar_dados(st.session_state.alunos_pilares)
-                
                 st.divider()
             
             # Adicionar novo texto
             st.write(f"**Adicionar Novo Texto para {aluno}**")
             col1, col2, col3, col4, col5, col6 = st.columns([2, 1, 1, 1, 1, 1])
-            
             with col1:
-                nome_novo_texto = st.text_input(
-                    "Nome do Texto",
-                    placeholder="Ex: Discurso Empresa, Entrevista",
-                    key=f"nome_new_{aluno}"
-                )
-            
-            with col2:
-                clareza = st.slider(f"Clareza", 0.0, 5.0, 2.5, 0.5, key=f"clareza_new_{aluno}")
-            
-            with col3:
-                impacto = st.slider(f"Impacto", 0.0, 5.0, 2.5, 0.5, key=f"impacto_new_{aluno}")
-            
-            with col4:
-                visao = st.slider(f"Visão", 0.0, 5.0, 2.5, 0.5, key=f"visao_new_{aluno}")
-            
-            with col5:
-                conexao = st.slider(f"Conexão", 0.0, 5.0, 2.5, 0.5, key=f"conexao_new_{aluno}")
-            
+                nome_novo_texto = st.text_input("Nome do Texto", placeholder="Ex: Discurso Empresa", key=f"nome_new_{aluno}")
+            with col2: clareza = st.slider(f"Clareza", 0.0, 5.0, 2.5, 0.5, key=f"clareza_new_{aluno}")
+            with col3: impacto = st.slider(f"Impacto", 0.0, 5.0, 2.5, 0.5, key=f"impacto_new_{aluno}")
+            with col4: visao = st.slider(f"Visão", 0.0, 5.0, 2.5, 0.5, key=f"visao_new_{aluno}")
+            with col5: conexao = st.slider(f"Conexão", 0.0, 5.0, 2.5, 0.5, key=f"conexao_new_{aluno}")
             with col6:
                 if st.button(f"✅", key=f"add_{aluno}"):
                     nome_final = nome_novo_texto if nome_novo_texto else f"Texto {len(st.session_state.alunos_pilares[aluno]) + 1}"
                     st.session_state.alunos_pilares[aluno].append((nome_final, clareza, impacto, visao, conexao))
                     salvar_dados(st.session_state.alunos_pilares)
-                    st.success(f"Avaliação adicionada para {aluno}!")
                     st.rerun()
-            
-            st.divider()
             
             if st.button(f"🗑️ Remover Todos", key=f"del_all_{aluno}"):
                 st.session_state.alunos_pilares[aluno] = []
                 salvar_dados(st.session_state.alunos_pilares)
-                st.info(f"Todas as avaliações de {aluno} foram removidas!")
                 st.rerun()
 
 st.markdown("---")
 
-# Gerar gráfico de radar
+# Gerar gráfico de radar interativo com Plotly
 if st.session_state.alunos_pilares and any(st.session_state.alunos_pilares.values()):
-    st.subheader("🎯 Gráfico de Radar - Evolução por Pilares")
+    st.subheader("🎯 Gráfico de Radar Interativo - Evolução por Pilares")
     
-    # Criar figura com subplots para cada aluno
-    num_alunos = len([a for a in st.session_state.alunos_pilares.values() if a])
+    alunos_com_dados = [(aluno, pontos) for aluno, pontos in st.session_state.alunos_pilares.items() if pontos]
     
-    if num_alunos > 0:
-        # Criar uma figura com um gráfico de radar para cada aluno
-        cols_display = st.columns(min(2, num_alunos))
-        
-        alunos_com_dados = [(aluno, pontos) for aluno, pontos in st.session_state.alunos_pilares.items() if pontos]
-        
-        for idx, (aluno, pontos) in enumerate(alunos_com_dados):
-            with cols_display[idx % len(cols_display)]:
-                # Criar figura de radar
-                fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(projection='polar'), facecolor=BG_COLOR)
-                ax.set_facecolor(BG_COLOR)
-                
-                # Pilares
-                pilares = ['Clareza', 'Impacto', 'Visão', 'Conexão']
-                num_pilares = len(pilares)
-                
-                # Ângulos para cada pilar
-                angles = np.linspace(0, 2 * np.pi, num_pilares, endpoint=False).tolist()
-                angles += angles[:1]  # Fechar o polígono
-                
-                # Cores para os textos usando a paleta refinada
-                colors = [CORES_CALOR_REFINADA[i % len(CORES_CALOR_REFINADA)] for i in range(len(pontos))]
-                
-                # Plotar cada texto
-                for (nome_texto, clareza, impacto, visao, conexao), color in zip(pontos, colors):
-                    valores = [clareza, impacto, visao, conexao]
-                    valores += valores[:1]  # Fechar o polígono
-                    
-                    ax.plot(angles, valores, 'o-', linewidth=3, label=nome_texto[:26], color=color)
-                    ax.fill(angles, valores, alpha=0.05, color=color)
-                
-                # Configurações do gráfico
-                ax.set_xticks(angles[:-1])
-                ax.set_xticklabels(pilares, size=12, fontweight='bold', color=TEXT_COLOR)
-                
-                # Afastar os rótulos do centro de forma segura usando padding
-                ax.tick_params(axis='x', pad=25)
-                
-                ax.set_ylim(0, 5.5)
-                ax.set_yticks([1, 2, 3, 4, 5])
-                ax.set_yticklabels(['1', '2', '3', '4', '5'], size=9, color=TEXT_COLOR, alpha=0.7)
-                ax.grid(True, color=TEXT_COLOR, alpha=0.3)
-                
-                # Título
-                ax.set_title(f"{aluno}", size=16, fontweight='bold', color=TEXT_COLOR, pad=40)
-                
-                # Legenda
-                ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1), fontsize=9)
-                
-                plt.tight_layout()
-                st.pyplot(fig)
-                plt.close()
-        
-        # Botão para baixar todos os gráficos
-        st.markdown("---")
-        st.write("**Exportar Gráficos:**")
-        
-        # Gerar um gráfico grande com todos os alunos para download
-        if len(alunos_com_dados) > 0:
-            fig, axes = plt.subplots(1, len(alunos_com_dados), figsize=(7*len(alunos_com_dados), 7), subplot_kw=dict(projection='polar'), facecolor=BG_COLOR)
+    if alunos_com_dados:
+        for aluno, pontos in alunos_com_dados:
+            st.write(f"### 👤 {aluno}")
             
-            if len(alunos_com_dados) == 1:
-                axes = [axes]
-            
+            fig = go.Figure()
             pilares = ['Clareza', 'Impacto', 'Visão', 'Conexão']
-            num_pilares = len(pilares)
-            angles = np.linspace(0, 2 * np.pi, num_pilares, endpoint=False).tolist()
-            angles += angles[:1]
             
-            for ax, (aluno, pontos) in zip(axes, alunos_com_dados):
-                ax.set_facecolor(BG_COLOR)
-                colors = [CORES_CALOR_REFINADA[i % len(CORES_CALOR_REFINADA)] for i in range(len(pontos))]
+            for i, (nome_texto, clareza, impacto, visao, conexao) in enumerate(pontos):
+                color = CORES_CALOR_REFINADA[i % len(CORES_CALOR_REFINADA)]
                 
-                for (nome_texto, clareza, impacto, visao, conexao), color in zip(pontos, colors):
-                    valores = [clareza, impacto, visao, conexao]
-                    valores += valores[:1]
-                    
-                    ax.plot(angles, valores, 'o-', linewidth=3, label=nome_texto[:26], color=color)
-                    ax.fill(angles, valores, alpha=0.05, color=color)
-                
-                ax.set_xticks(angles[:-1])
-                ax.set_xticklabels(pilares, size=11, fontweight='bold', color=TEXT_COLOR)
-                
-                # Afastar os rótulos do centro de forma segura usando padding
-                ax.tick_params(axis='x', pad=20)
-                
-                ax.set_ylim(0, 5.5)
-                ax.set_yticks([1, 2, 3, 4, 5])
-                ax.set_yticklabels(['1', '2', '3', '4', '5'], size=8, color=TEXT_COLOR, alpha=0.7)
-                ax.grid(True, color=TEXT_COLOR, alpha=0.3)
-                ax.set_title(f"{aluno}", size=14, fontweight='bold', color=TEXT_COLOR, pad=35)
-                ax.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1), fontsize=8)
+                fig.add_trace(go.Scatterpolar(
+                    r=[clareza, impacto, visao, conexao, clareza],
+                    theta=pilares + [pilares[0]],
+                    fill='toself',
+                    name=nome_texto[:26],
+                    line=dict(color=color, width=3),
+                    marker=dict(size=8),
+                    fillcolor=f"rgba{tuple(list(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + [0.1])}"
+                ))
             
-            plt.tight_layout()
-            
-            buffer = BytesIO()
-            fig.savefig(buffer, format='png', dpi=300, bbox_inches='tight')
-            buffer.seek(0)
-            
-            st.download_button(
-                label="📥 Baixar Todos os Gráficos (PNG)",
-                data=buffer,
-                file_name="graficos_pilares.png",
-                mime="image/png"
+            fig.update_layout(
+                polar=dict(
+                    bgcolor=BG_COLOR,
+                    radialaxis=dict(
+                        visible=True,
+                        range=[0, 5.5],
+                        tickvals=[1, 2, 3, 4, 5],
+                        tickfont=dict(color=TEXT_COLOR, size=10),
+                        gridcolor="rgba(78, 44, 28, 0.2)"
+                    ),
+                    angularaxis=dict(
+                        tickfont=dict(color=TEXT_COLOR, size=12, family="Arial Black"),
+                        gridcolor="rgba(78, 44, 28, 0.2)"
+                    )
+                ),
+                showlegend=True,
+                paper_bgcolor=BG_COLOR,
+                plot_bgcolor=BG_COLOR,
+                margin=dict(l=80, r=80, t=50, b=50),
+                legend=dict(font=dict(color=TEXT_COLOR, size=11)),
+                hovermode="closest"
             )
             
-            plt.close()
+            st.plotly_chart(fig, use_container_width=True)
 
 else:
     st.info("👉 Adicione um aluno e insira suas avaliações para visualizar o gráfico de radar.")
