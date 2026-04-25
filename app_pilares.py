@@ -62,6 +62,8 @@ st.markdown("""
         .main { background-color: #F2F0E4; }
         h1 { color: #4E2C1C; text-align: center; }
         h2 { color: #4E2C1C; }
+        /* Ajuste para garantir que o container do Plotly tenha espaço */
+        .js-plotly-plot { margin-bottom: 2rem; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -211,33 +213,44 @@ if st.session_state.alunos_pilares and any(st.session_state.alunos_pilares.value
                     theta=pilares + [pilares[0]],
                     fill='toself',
                     name=nome_texto[:26],
-                    line=dict(color=color, width=3),
-                    marker=dict(size=8),
+                    line=dict(color=color, width=4), # Linha mais grossa
+                    marker=dict(size=10), # Marcadores maiores
                     fillcolor=f"rgba{tuple(list(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + [0.1])}"
                 ))
             
             fig.update_layout(
+                height=750, # Altura fixa maior para evitar achatamento
                 polar=dict(
                     bgcolor=BG_COLOR,
                     radialaxis=dict(
                         visible=True,
                         range=[0, 5.5],
                         tickvals=[1, 2, 3, 4, 5],
-                        tickfont=dict(color=TEXT_COLOR, size=11),
+                        tickfont=dict(color=TEXT_COLOR, size=12),
                         gridcolor="rgba(78, 44, 28, 0.2)"
                     ),
                     angularaxis=dict(
-                        tickfont=dict(color=TEXT_COLOR, size=18, family="Arial Black"), # Aumentado para 18 e Arial Black
+                        tickfont=dict(color=TEXT_COLOR, size=20, family="Arial Black"), # Fonte ainda maior para os pilares
                         gridcolor="rgba(78, 44, 28, 0.2)",
-                        rotation=90, # Ajuste de rotação para melhor leitura
+                        rotation=90,
                         direction="clockwise"
                     )
                 ),
                 showlegend=True,
                 paper_bgcolor=BG_COLOR,
                 plot_bgcolor=BG_COLOR,
-                margin=dict(l=100, r=100, t=80, b=80), # Aumentado as margens para acomodar fontes maiores
-                legend=dict(font=dict(color=TEXT_COLOR, size=12)),
+                margin=dict(l=50, r=50, t=100, b=150), # Margem inferior maior para a legenda
+                legend=dict(
+                    orientation="h", # Legenda horizontal
+                    yanchor="bottom",
+                    y=-0.3, # Posicionada bem abaixo do gráfico
+                    xanchor="center",
+                    x=0.5,
+                    font=dict(color=TEXT_COLOR, size=16), # Legenda bem maior
+                    bgcolor="rgba(242, 240, 228, 0.8)",
+                    bordercolor=TEXT_COLOR,
+                    borderwidth=1
+                ),
                 hovermode="closest"
             )
             
