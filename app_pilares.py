@@ -223,19 +223,21 @@ if st.session_state.alunos_pilares and any(st.session_state.alunos_pilares.value
                         visible=True,
                         range=[0, 5.5],
                         tickvals=[1, 2, 3, 4, 5],
-                        tickfont=dict(color=TEXT_COLOR, size=10),
+                        tickfont=dict(color=TEXT_COLOR, size=11),
                         gridcolor="rgba(78, 44, 28, 0.2)"
                     ),
                     angularaxis=dict(
-                        tickfont=dict(color=TEXT_COLOR, size=12, family="Arial Black"),
-                        gridcolor="rgba(78, 44, 28, 0.2)"
+                        tickfont=dict(color=TEXT_COLOR, size=18, family="Arial Black"), # Aumentado para 18 e Arial Black
+                        gridcolor="rgba(78, 44, 28, 0.2)",
+                        rotation=90, # Ajuste de rotação para melhor leitura
+                        direction="clockwise"
                     )
                 ),
                 showlegend=True,
                 paper_bgcolor=BG_COLOR,
                 plot_bgcolor=BG_COLOR,
-                margin=dict(l=80, r=80, t=50, b=50),
-                legend=dict(font=dict(color=TEXT_COLOR, size=11)),
+                margin=dict(l=100, r=100, t=80, b=80), # Aumentado as margens para acomodar fontes maiores
+                legend=dict(font=dict(color=TEXT_COLOR, size=12)),
                 hovermode="closest"
             )
             
