@@ -1,10 +1,9 @@
 import streamlit as st
+from streamlit_gsheets import GSheetsConnection
 import plotly.graph_objects as go
 import pandas as pd
-from io import BytesIO
 import json
-import os
-from datetime import datetime
+import urllib.parse
 
 # Configuração da página
 st.set_page_config(page_title="Avaliação por Pilares", layout="wide", initial_sidebar_state="expanded")
@@ -15,254 +14,148 @@ TEXT_COLOR = '#4E2C1C'
 ACCENT_COLOR = '#E65100'
 SECONDARY_COLOR = '#8B4513'
 
-# Paleta Refinada Movimento Calor (Contraste Máximo)
+# Paleta Refinada Movimento Calor
 CORES_CALOR_REFINADA = [
-    '#E65100', # Laranja Vibrante
-    '#2E7D32', # Verde Floresta
-    '#4E2C1C', # Marrom Café Profundo
-    '#1565C0', # Azul Oceano
-    '#D4A574', # Bege Dourado
-    '#C62828', # Vermelho Intenso
-    '#FF8F00', # Âmbar/Amarelo Queimado
-    '#6A1B9A', # Roxo Berinjela
-    '#AD1457', # Rosa Velho/Bordô
-    '#37474F'  # Cinza Azulado Escuro
+    '#E65100', '#2E7D32', '#4E2C1C', '#1565C0', '#D4A574', 
+    '#C62828', '#FF8F00', '#6A1B9A', '#AD1457', '#37474F'
 ]
 
-# Arquivo de armazenamento de dados
-DATA_FILE = "/tmp/pilares_data.json"
+# --- Conexão com Google Sheets ---
+try:
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    df_existente = conn.read(ttl=0)
+except Exception as e:
+    df_existente = pd.DataFrame(columns=['Aluno', 'Texto', 'Clareza', 'Impacto', 'Visão', 'Conexão'])
 
-# Funções de persistência
-def carregar_dados():
-    """Carrega os dados do arquivo JSON se existir."""
-    if os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except:
-            return {}
-    return {}
+def salvar_na_planilha(df):
+    conn.update(data=df)
+    st.cache_data.clear()
 
-def salvar_dados(dados):
-    """Salva os dados no arquivo JSON."""
-    try:
-        with open(DATA_FILE, 'w', encoding='utf-8') as f:
-            json.dump(dados, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        st.error(f"Erro ao salvar dados: {e}")
+# --- Lógica de Parâmetros de URL ---
+query_params = st.query_params
+aluno_selecionado_url = query_params.get("aluno", None)
 
-def exportar_dados_json(dados):
-    """Converte os dados para JSON para download."""
-    return json.dumps(dados, ensure_ascii=False, indent=2)
-
-# Título da aplicação
-st.markdown("""
+# Estilos CSS
+st.markdown(f"""
     <style>
-        body { background-color: #F2F0E4; }
-        .main { background-color: #F2F0E4; }
-        h1 { color: #4E2C1C; text-align: center; }
-        h2 { color: #4E2C1C; }
-        /* Ajuste para garantir que o container do Plotly tenha espaço */
-        .js-plotly-plot { margin-bottom: 2rem; }
+        body {{ background-color: {BG_COLOR}; }}
+        .main {{ background-color: {BG_COLOR}; }}
+        h1 {{ color: {TEXT_COLOR}; text-align: center; }}
+        h2 {{ color: {TEXT_COLOR}; }}
+        .stButton>button {{ background-color: {ACCENT_COLOR}; color: white; border-radius: 5px; }}
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🎯 Avaliação por Pilares - Clareza, Impacto, Visão, Conexão")
+# --- MODO VISUALIZAÇÃO DO ALUNO ---
+if aluno_selecionado_url:
+    aluno_nome = aluno_selecionado_url
+    dados_aluno = df_existente[df_existente['Aluno'] == aluno_nome]
+    
+    if not dados_aluno.empty:
+        st.title(f"🎯 Sua Evolução por Pilares")
+        st.markdown(f"<h3 style='text-align: center; color: {SECONDARY_COLOR};'>{aluno_nome}</h3>", unsafe_allow_html=True)
+        
+        fig = go.Figure()
+        pilares = ['Clareza', 'Impacto', 'Visão', 'Conexão']
+        
+        for i, row in enumerate(dados_aluno.itertuples()):
+            color = CORES_CALOR_REFINADA[i % len(CORES_CALOR_REFINADA)]
+            fig.add_trace(go.Scatterpolar(
+                r=[row.Clareza, row.Impacto, row.Visão, row.Conexão, row.Clareza],
+                theta=pilares + [pilares[0]],
+                fill='toself',
+                name=row.Texto,
+                line=dict(color=color, width=4),
+                marker=dict(size=10),
+                fillcolor=f"rgba{tuple(list(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + [0.1])}"
+            ))
+        
+        fig.update_layout(
+            height=750,
+            polar=dict(
+                bgcolor=BG_COLOR,
+                radialaxis=dict(visible=True, range=[0, 5.5], tickvals=[1, 2, 3, 4, 5], tickfont=dict(size=14, family="Arial Black")),
+                angularaxis=dict(tickfont=dict(size=20, family="Arial Black"), rotation=90, direction="clockwise")
+            ),
+            legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.05, font=dict(size=16)),
+            paper_bgcolor=BG_COLOR,
+            plot_bgcolor=BG_COLOR,
+            margin=dict(l=80, r=150, t=50, b=50)
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.error(f"Aluno '{aluno_nome}' não encontrado.")
+    
+    if st.button("⬅️ Voltar para Gestão"):
+        st.query_params.clear()
+        st.rerun()
+    st.stop()
+
+# --- MODO GESTÃO (MENTOR) ---
+st.title("🎯 Gestão de Pilares - Movimento Calor")
 st.markdown("---")
 
-# Sidebar para instruções e gerenciamento de dados
-with st.sidebar:
-    st.header("📋 Como Usar")
-    st.markdown("""
-    1. **Adicione um Aluno:** Digite o nome do aluno.
-    2. **Insira um Texto:** Dê um nome ao texto/apresentação.
-    3. **Avalie os Pilares:** Atribua notas (0-5) para cada pilar.
-    4. **Interatividade:** 
-       - Passe o mouse sobre os pontos para ver as notas.
-       - Clique na legenda para ocultar/mostrar avaliações.
-       - Clique duas vezes na legenda para isolar uma avaliação.
-    
-    ---
-    
-    **💾 Gerenciamento de Dados:**
-    """)
-    
-    # Opções de gerenciamento de dados
-    if st.button("📥 Baixar Backup (JSON)"):
-        dados = st.session_state.get('alunos_pilares', {})
-        json_str = exportar_dados_json(dados)
-        st.download_button(
-            label="📥 Clique aqui para baixar",
-            data=json_str,
-            file_name=f"backup_pilares_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-            mime="application/json"
-        )
-    
-    if st.button("🗑️ Limpar Todos os Dados"):
-        st.session_state.alunos_pilares = {}
-        salvar_dados({})
-        st.success("✅ Todos os dados foram removidos!")
-        st.rerun()
-
-# Inicializar session state com dados persistentes
-if 'alunos_pilares' not in st.session_state:
-    st.session_state.alunos_pilares = carregar_dados()
-
-# Seção de entrada de dados
+# Entrada de Alunos
 col1, col2 = st.columns([2, 1])
-
 with col1:
     novo_aluno = st.text_input("Nome do Aluno:", placeholder="Ex: Leandro Souza")
-
 with col2:
     if st.button("➕ Adicionar Aluno"):
-        if novo_aluno and novo_aluno not in st.session_state.alunos_pilares:
-            st.session_state.alunos_pilares[novo_aluno] = []
-            salvar_dados(st.session_state.alunos_pilares)
-            st.success(f"Aluno '{novo_aluno}' adicionado!")
+        if novo_aluno and novo_aluno not in df_existente['Aluno'].unique():
+            nova_linha = pd.DataFrame([{'Aluno': novo_aluno, 'Texto': 'Inicial', 'Clareza': 0, 'Impacto': 0, 'Visão': 0, 'Conexão': 0}])
+            df_atualizado = pd.concat([df_existente, nova_linha], ignore_index=True)
+            salvar_na_planilha(df_atualizado)
             st.rerun()
-        elif novo_aluno in st.session_state.alunos_pilares:
-            st.warning(f"Aluno '{novo_aluno}' já existe!")
 
 st.markdown("---")
 
-# Exibir alunos e permitir entrada de dados
-if st.session_state.alunos_pilares:
-    st.subheader("📝 Avaliação de Textos por Pilares")
-    
-    for aluno in st.session_state.alunos_pilares:
+# Listagem e Edição
+alunos_unicos = df_existente['Aluno'].unique()
+if len(alunos_unicos) > 0:
+    for aluno in alunos_unicos:
         with st.expander(f"👤 {aluno}", expanded=False):
-            # Mostrar e permitir edição de textos já avaliados
-            if st.session_state.alunos_pilares[aluno]:
-                st.write("**Textos Avaliados (Clique para Editar):**")
-                
-                # Criar colunas para edição
-                cols = st.columns([2, 1, 1, 1, 1, 1])
-                with cols[0]: st.write("**Nome do Texto**")
-                with cols[1]: st.write("**Clareza**")
-                with cols[2]: st.write("**Impacto**")
-                with cols[3]: st.write("**Visão**")
-                with cols[4]: st.write("**Conexão**")
-                with cols[5]: st.write("**Ação**")
-                
-                # Exibir e permitir edição de cada avaliação
-                for i, (nome_texto, clareza, impacto, visao, conexao) in enumerate(st.session_state.alunos_pilares[aluno]):
-                    cols = st.columns([2, 1, 1, 1, 1, 1])
-                    with cols[0]:
-                        novo_nome = st.text_input(f"Nome T{i+1}", value=nome_texto, key=f"nome_edit_{aluno}_{i}", label_visibility="collapsed")
-                    with cols[1]:
-                        nova_clareza = st.number_input(f"Clareza T{i+1}", min_value=0.0, max_value=5.0, value=float(clareza), step=0.5, key=f"clareza_edit_{aluno}_{i}", label_visibility="collapsed")
-                    with cols[2]:
-                        novo_impacto = st.number_input(f"Impacto T{i+1}", min_value=0.0, max_value=5.0, value=float(impacto), step=0.5, key=f"impacto_edit_{aluno}_{i}", label_visibility="collapsed")
-                    with cols[3]:
-                        nova_visao = st.number_input(f"Visão T{i+1}", min_value=0.0, max_value=5.0, value=float(visao), step=0.5, key=f"visao_edit_{aluno}_{i}", label_visibility="collapsed")
-                    with cols[4]:
-                        nova_conexao = st.number_input(f"Conexão T{i+1}", min_value=0.0, max_value=5.0, value=float(conexao), step=0.5, key=f"conexao_edit_{aluno}_{i}", label_visibility="collapsed")
-                    with cols[5]:
-                        if st.button(f"🗑️", key=f"remove_{aluno}_{i}"):
-                            st.session_state.alunos_pilares[aluno].pop(i)
-                            salvar_dados(st.session_state.alunos_pilares)
-                            st.rerun()
-                    
-                    if novo_nome != nome_texto or nova_clareza != clareza or novo_impacto != impacto or nova_visao != visao or nova_conexao != conexao:
-                        st.session_state.alunos_pilares[aluno][i] = (novo_nome, nova_clareza, novo_impacto, nova_visao, nova_conexao)
-                        salvar_dados(st.session_state.alunos_pilares)
-                st.divider()
+            base_url = "https://mapa-alunos-calor.streamlit.app/"
+            link_aluno = f"{base_url}?aluno={urllib.parse.quote(aluno)}"
+            st.markdown(f"**🔗 Link Único do Aluno:**")
+            st.code(link_aluno, language="text")
+            st.divider()
             
-            # Adicionar novo texto
-            st.write(f"**Adicionar Novo Texto para {aluno}**")
-            col1, col2, col3, col4, col5, col6 = st.columns([2, 1, 1, 1, 1, 1])
-            with col1:
-                nome_novo_texto = st.text_input("Nome do Texto", placeholder="Ex: Discurso Empresa", key=f"nome_new_{aluno}")
-            with col2: clareza = st.slider(f"Clareza", 0.0, 5.0, 2.5, 0.5, key=f"clareza_new_{aluno}")
-            with col3: impacto = st.slider(f"Impacto", 0.0, 5.0, 2.5, 0.5, key=f"impacto_new_{aluno}")
-            with col4: visao = st.slider(f"Visão", 0.0, 5.0, 2.5, 0.5, key=f"visao_new_{aluno}")
-            with col5: conexao = st.slider(f"Conexão", 0.0, 5.0, 2.5, 0.5, key=f"conexao_new_{aluno}")
-            with col6:
-                if st.button(f"✅", key=f"add_{aluno}"):
-                    nome_final = nome_novo_texto if nome_novo_texto else f"Texto {len(st.session_state.alunos_pilares[aluno]) + 1}"
-                    st.session_state.alunos_pilares[aluno].append((nome_final, clareza, impacto, visao, conexao))
-                    salvar_dados(st.session_state.alunos_pilares)
+            dados_aluno = df_existente[df_existente['Aluno'] == aluno]
+            
+            for idx, row in dados_aluno.iterrows():
+                c1, c2, c3, c4, c5, c6 = st.columns([2, 1, 1, 1, 1, 0.5])
+                with c1: n_nome = st.text_input(f"Nome", value=row['Texto'], key=f"n_{idx}", label_visibility="collapsed")
+                with c2: n_c = st.number_input(f"C", 0.0, 5.0, float(row['Clareza']), 0.5, key=f"c_{idx}", label_visibility="collapsed")
+                with c3: n_im = st.number_input(f"I", 0.0, 5.0, float(row['Impacto']), 0.5, key=f"i_{idx}", label_visibility="collapsed")
+                with c4: n_v = st.number_input(f"V", 0.0, 5.0, float(row['Visão']), 0.5, key=f"v_{idx}", label_visibility="collapsed")
+                with c5: n_co = st.number_input(f"Co", 0.0, 5.0, float(row['Conexão']), 0.5, key=f"co_{idx}", label_visibility="collapsed")
+                with c6: 
+                    if st.button("🗑️", key=f"del_{idx}"):
+                        df_existente = df_existente.drop(idx)
+                        salvar_na_planilha(df_existente)
+                        st.rerun()
+                
+                if n_nome != row['Texto'] or n_c != row['Clareza'] or n_im != row['Impacto'] or n_v != row['Visão'] or n_co != row['Conexão']:
+                    df_existente.at[idx, 'Texto'] = n_nome
+                    df_existente.at[idx, 'Clareza'] = n_c
+                    df_existente.at[idx, 'Impacto'] = n_im
+                    df_existente.at[idx, 'Visão'] = n_v
+                    df_existente.at[idx, 'Conexão'] = n_co
+                    salvar_na_planilha(df_existente)
+            
+            st.write("**Adicionar Avaliação**")
+            a1, a2, a3, a4, a5, a6 = st.columns([2, 1, 1, 1, 1, 0.5])
+            with a1: a_nome = st.text_input("Texto", placeholder="Ex: Pitch", key=f"an_{aluno}")
+            with a2: a_c = st.number_input("C", 0.0, 5.0, 2.5, 0.5, key=f"ac_{aluno}")
+            with a3: a_im = st.number_input("I", 0.0, 5.0, 2.5, 0.5, key=f"ai_{aluno}")
+            with a4: a_v = st.number_input("V", 0.0, 5.0, 2.5, 0.5, key=f"av_{aluno}")
+            with a5: a_co = st.number_input("Co", 0.0, 5.0, 2.5, 0.5, key=f"aco_{aluno}")
+            with a6:
+                if st.button("✅", key=f"ab_{aluno}"):
+                    nova_av = pd.DataFrame([{'Aluno': aluno, 'Texto': a_nome if a_nome else "Novo", 'Clareza': a_c, 'Impacto': a_im, 'Visão': a_v, 'Conexão': a_co}])
+                    df_atualizado = pd.concat([df_existente, nova_av], ignore_index=True)
+                    salvar_na_planilha(df_atualizado)
                     st.rerun()
-            
-            if st.button(f"🗑️ Remover Todos", key=f"del_all_{aluno}"):
-                st.session_state.alunos_pilares[aluno] = []
-                salvar_dados(st.session_state.alunos_pilares)
-                st.rerun()
 
 st.markdown("---")
-
-# Gerar gráfico de radar interativo com Plotly
-if st.session_state.alunos_pilares and any(st.session_state.alunos_pilares.values()):
-    st.subheader("🎯 Gráfico de Radar Interativo - Evolução por Pilares")
-    
-    alunos_com_dados = [(aluno, pontos) for aluno, pontos in st.session_state.alunos_pilares.items() if pontos]
-    
-    if alunos_com_dados:
-        for aluno, pontos in alunos_com_dados:
-            st.write(f"### 👤 {aluno}")
-            
-            fig = go.Figure()
-            pilares = ['Clareza', 'Impacto', 'Visão', 'Conexão']
-            
-            for i, (nome_texto, clareza, impacto, visao, conexao) in enumerate(pontos):
-                color = CORES_CALOR_REFINADA[i % len(CORES_CALOR_REFINADA)]
-                
-                fig.add_trace(go.Scatterpolar(
-                    r=[clareza, impacto, visao, conexao, clareza],
-                    theta=pilares + [pilares[0]],
-                    fill='toself',
-                    name=nome_texto[:26],
-                    line=dict(color=color, width=4), # Linha mais grossa
-                    marker=dict(size=10), # Marcadores maiores
-                    fillcolor=f"rgba{tuple(list(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + [0.1])}"
-                ))
-            
-            fig.update_layout(
-                height=750, # Altura fixa maior para evitar achatamento
-                polar=dict(
-                    bgcolor=BG_COLOR,
-                    radialaxis=dict(
-                        visible=True,
-                        range=[0, 5.5],
-                        tickvals=[1, 2, 3, 4, 5],
-                        tickfont=dict(color=TEXT_COLOR, size=12),
-                        gridcolor="rgba(78, 44, 28, 0.2)"
-                    ),
-                    angularaxis=dict(
-                        tickfont=dict(color=TEXT_COLOR, size=20, family="Arial Black"), # Fonte ainda maior para os pilares
-                        gridcolor="rgba(78, 44, 28, 0.2)",
-                        rotation=90,
-                        direction="clockwise"
-                    )
-                ),
-                showlegend=True,
-                paper_bgcolor=BG_COLOR,
-                plot_bgcolor=BG_COLOR,
-                margin=dict(l=50, r=50, t=100, b=150), # Margem inferior maior para a legenda
-                legend=dict(
-                    orientation="h", # Legenda horizontal
-                    yanchor="bottom",
-                    y=-0.3, # Posicionada bem abaixo do gráfico
-                    xanchor="center",
-                    x=0.5,
-                    font=dict(color=TEXT_COLOR, size=16), # Legenda bem maior
-                    bgcolor="rgba(242, 240, 228, 0.8)",
-                    bordercolor=TEXT_COLOR,
-                    borderwidth=1
-                ),
-                hovermode="closest"
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
-
-else:
-    st.info("👉 Adicione um aluno e insira suas avaliações para visualizar o gráfico de radar.")
-
-st.markdown("---")
-st.markdown("""
-<div style="text-align: center; color: #4E2C1C; font-size: 12px;">
-    <p>🎓 Ferramenta de Avaliação por Pilares - Movimento Calor | Clareza, Impacto, Visão, Conexão</p>
-    <p style="font-size: 10px; opacity: 0.7;">💾 Seus dados são salvos automaticamente e persistem entre as sessões.</p>
-</div>
-""", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #4E2C1C; font-size: 12px;'>🎓 Movimento Calor | Gestão de Pilares Permanente</div>", unsafe_allow_html=True)
