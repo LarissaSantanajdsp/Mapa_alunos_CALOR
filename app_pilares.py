@@ -1,4 +1,4 @@
-import streamlit as st
+mport streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
 import json
@@ -26,7 +26,6 @@ GITHUB_USER = "LarissaSantanajdsp"
 GITHUB_REPO = "Mapa_alunos_CALOR"
 DATA_FILE_PATH = "dados_alunos.json"
 
-# Tenta pegar o token dos Secrets do Streamlit
 try:
     GITHUB_TOKEN = st.secrets["GITHUB_TOKEN"]
 except:
@@ -35,12 +34,10 @@ except:
 def carregar_dados_github():
     if not GITHUB_TOKEN:
         return {}
-    
     url = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/contents/{DATA_FILE_PATH}"
     headers = {"Authorization": f"token {GITHUB_TOKEN}"}
-    
     try:
-        response = requests.get(url, headers=headers )
+        response = requests.get(url, headers=headers)
         if response.status_code == 200:
             content = response.json()
             decoded_data = base64.b64decode(content['content']).decode('utf-8')
@@ -52,84 +49,102 @@ def carregar_dados_github():
 def salvar_dados_github(dados):
     if not GITHUB_TOKEN:
         return False
-    
     url = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/contents/{DATA_FILE_PATH}"
     headers = {"Authorization": f"token {GITHUB_TOKEN}"}
-    
     sha = None
-    get_response = requests.get(url, headers=headers )
+    get_response = requests.get(url, headers=headers)
     if get_response.status_code == 200:
         sha = get_response.json()['sha']
-    
     content_json = json.dumps(dados, ensure_ascii=False, indent=2)
     encoded_content = base64.b64encode(content_json.encode('utf-8')).decode('utf-8')
-    
-    payload = {
-        "message": "Atualização automática de dados dos alunos",
-        "content": encoded_content
-    }
-    if sha:
-        payload["sha"] = sha
-        
+    payload = {"message": "Atualização automática de dados dos alunos", "content": encoded_content}
+    if sha: payload["sha"] = sha
     requests.put(url, headers=headers, json=payload)
     return True
 
-# Inicializar dados
 if 'alunos_pilares' not in st.session_state:
     st.session_state.alunos_pilares = carregar_dados_github()
 
-# --- Lógica de Parâmetros de URL ---
 query_params = st.query_params
 aluno_selecionado_url = query_params.get("aluno", None)
 
-# Estilos CSS
 st.markdown(f"""
     <style>
         body {{ background-color: {BG_COLOR}; }}
         .main {{ background-color: {BG_COLOR}; }}
-        h1 {{ color: {TEXT_COLOR}; text-align: center; }}
+        h1 {{ color: {TEXT_COLOR}; text-align: center; font-family: 'Arial Black'; }}
         h2 {{ color: {TEXT_COLOR}; }}
         .stButton>button {{ background-color: {ACCENT_COLOR}; color: white; border-radius: 5px; }}
     </style>
 """, unsafe_allow_html=True)
+
+def criar_grafico_radar(aluno_nome, pontos):
+    fig = go.Figure()
+    pilares = ['Clareza', 'Impacto', 'Visão', 'Conexão']
+    
+    for i, p in enumerate(pontos):
+        color = CORES_CALOR_REFINADA[i % len(CORES_CALOR_REFINADA)]
+        fig.add_trace(go.Scatterpolar(
+            r=[p[1], p[2], p[3], p[4], p[1]],
+            theta=pilares + [pilares[0]],
+            fill='toself',
+            name=p[0],
+            line=dict(color=color, width=4),
+            marker=dict(size=10),
+            fillcolor=f"rgba{tuple(list(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + [0.1])}"
+        ))
+    
+    fig.update_layout(
+        title=dict(
+            text=f"Mapa de Evolução: {aluno_nome}",
+            x=0.5,
+            y=0.95,
+            font=dict(size=24, color=TEXT_COLOR, family="Arial Black")
+        ),
+        height=800,
+        polar=dict(
+            bgcolor=BG_COLOR,
+            radialaxis=dict(
+                visible=True, 
+                range=[0, 5.5], 
+                tickvals=[1, 2, 3, 4, 5], 
+                tickfont=dict(size=14, color=TEXT_COLOR, family="Arial Black"),
+                gridcolor="rgba(78, 44, 28, 0.2)"
+            ),
+            angularaxis=dict(
+                tickfont=dict(size=22, color=TEXT_COLOR, family="Arial Black"), 
+                rotation=90, 
+                direction="clockwise",
+                gridcolor="rgba(78, 44, 28, 0.2)"
+            )
+        ),
+        showlegend=True,
+        legend=dict(
+            title=dict(text="Avaliações Inseridas", font=dict(size=16, family="Arial Black")),
+            orientation="v",
+            yanchor="middle",
+            y=0.5,
+            xanchor="left",
+            x=1.1,
+            font=dict(size=16, color=TEXT_COLOR)
+        ),
+        paper_bgcolor=BG_COLOR,
+        plot_bgcolor=BG_COLOR,
+        margin=dict(l=80, r=150, t=100, b=50),
+        dragmode='zoom' # Ativa o modo de zoom por padrão
+    )
+    return fig
 
 # --- MODO VISUALIZAÇÃO DO ALUNO ---
 if aluno_selecionado_url:
     aluno_nome = aluno_selecionado_url
     if aluno_nome in st.session_state.alunos_pilares:
         st.title(f"🎯 Sua Evolução por Pilares")
-        st.markdown(f"<h3 style='text-align: center; color: {SECONDARY_COLOR};'>{aluno_nome}</h3>", unsafe_allow_html=True)
-        
         pontos = st.session_state.alunos_pilares[aluno_nome]
         if pontos:
-            fig = go.Figure()
-            pilares = ['Clareza', 'Impacto', 'Visão', 'Conexão']
-            
-            for i, p in enumerate(pontos):
-                color = CORES_CALOR_REFINADA[i % len(CORES_CALOR_REFINADA)]
-                fig.add_trace(go.Scatterpolar(
-                    r=[p[1], p[2], p[3], p[4], p[1]],
-                    theta=pilares + [pilares[0]],
-                    fill='toself',
-                    name=p[0],
-                    line=dict(color=color, width=4),
-                    marker=dict(size=10),
-                    fillcolor=f"rgba{tuple(list(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + [0.1])}"
-                ))
-            
-            fig.update_layout(
-                height=750,
-                polar=dict(
-                    bgcolor=BG_COLOR,
-                    radialaxis=dict(visible=True, range=[0, 5.5], tickvals=[1, 2, 3, 4, 5], tickfont=dict(size=14, family="Arial Black")),
-                    angularaxis=dict(tickfont=dict(size=20, family="Arial Black"), rotation=90, direction="clockwise")
-                ),
-                legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.05, font=dict(size=16)),
-                paper_bgcolor=BG_COLOR,
-                plot_bgcolor=BG_COLOR,
-                margin=dict(l=80, r=150, t=50, b=50)
-            )
-            st.plotly_chart(fig, use_container_width=True)
+            fig = criar_grafico_radar(aluno_nome, pontos)
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': True, 'scrollZoom': True})
+            st.info("💡 Use as ferramentas no topo do gráfico para dar zoom, resetar a visão ou baixar a imagem.")
     else:
         st.error(f"Aluno '{aluno_nome}' não encontrado.")
     
@@ -145,7 +160,6 @@ st.markdown("---")
 if not GITHUB_TOKEN:
     st.warning("⚠️ Configure o GITHUB_TOKEN nos Secrets para salvar permanentemente.")
 
-# Entrada de Alunos
 col1, col2 = st.columns([2, 1])
 with col1:
     novo_aluno = st.text_input("Nome do Aluno:", placeholder="Ex: Leandro Souza")
@@ -158,12 +172,11 @@ with col2:
 
 st.markdown("---")
 
-# Listagem e Edição
 if st.session_state.alunos_pilares:
     for aluno in st.session_state.alunos_pilares:
         with st.expander(f"👤 {aluno}", expanded=False):
             base_url = "https://mapa-alunos-calor.streamlit.app/"
-            link_aluno = f"{base_url}?aluno={urllib.parse.quote(aluno )}"
+            link_aluno = f"{base_url}?aluno={urllib.parse.quote(aluno)}"
             st.markdown(f"**🔗 Link Único do Aluno:**")
             st.code(link_aluno, language="text")
             st.divider()
@@ -200,13 +213,8 @@ if st.session_state.alunos_pilares:
                     st.rerun()
             
             if pontos:
-                fig = go.Figure()
-                pilares = ['Clareza', 'Impacto', 'Visão', 'Conexão']
-                for i, p in enumerate(pontos):
-                    color = CORES_CALOR_REFINADA[i % len(CORES_CALOR_REFINADA)]
-                    fig.add_trace(go.Scatterpolar(r=[p[1], p[2], p[3], p[4], p[1]], theta=pilares + [pilares[0]], fill='toself', name=p[0], line=dict(color=color, width=3)))
-                fig.update_layout(height=450, polar=dict(bgcolor=BG_COLOR, radialaxis=dict(range=[0, 5.5])), showlegend=True, paper_bgcolor=BG_COLOR)
-                st.plotly_chart(fig, use_container_width=True)
+                fig = criar_grafico_radar(aluno, pontos)
+                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': True})
 
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: #4E2C1C; font-size: 12px;'>🎓 Movimento Calor | Gestão de Pilares Permanente</div>", unsafe_allow_html=True)
