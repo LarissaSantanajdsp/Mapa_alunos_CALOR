@@ -111,8 +111,8 @@ def criar_grafico_radar(aluno_nome, pontos):
             dict(
                 source=f"data:image/jpeg;base64,{logo_base64}",
                 xref="paper", yref="paper",
-                x=1.1, y=-0.1,
-                sizex=0.25, sizey=0.25,
+                x=1.05, y=-0.05,
+                sizex=0.12, sizey=0.12, # Reduzido de 0.25 para 0.12
                 xanchor="right", yanchor="bottom"
             )
         )
@@ -212,3 +212,4 @@ if st.session_state.alunos_pilares:
 
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: #4E2C1C; font-size: 12px;'>🎓 Movimento Calor | Gestão de Pilares Permanente</div>", unsafe_allow_html=True)
+Para criar PPTs - Manus
