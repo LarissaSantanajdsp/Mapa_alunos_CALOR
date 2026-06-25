@@ -36,8 +36,8 @@ def carregar_dados_github():
     if not GITHUB_TOKEN:
         return {}
     
-    url = f"https://api.github.com/repos/{{GITHUB_USER}}/{{GITHUB_REPO}}/contents/{{DATA_FILE_PATH}}"
-    headers = {{"Authorization": f"token {{GITHUB_TOKEN}}"}}
+    url = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/contents/{DATA_FILE_PATH}"
+    headers = {"Authorization": f"token {GITHUB_TOKEN}"}
     
     try:
         response = requests.get(url, headers=headers )
@@ -53,8 +53,8 @@ def salvar_dados_github(dados):
     if not GITHUB_TOKEN:
         return False
     
-    url = f"https://api.github.com/repos/{{GITHUB_USER}}/{{GITHUB_REPO}}/contents/{{DATA_FILE_PATH}}"
-    headers = {{"Authorization": f"token {{GITHUB_TOKEN}}"}}
+    url = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/contents/{DATA_FILE_PATH}"
+    headers = {"Authorization": f"token {GITHUB_TOKEN}"}
     
     sha = None
     get_response = requests.get(url, headers=headers )
@@ -85,11 +85,11 @@ aluno_selecionado_url = query_params.get("aluno", None)
 # Estilos CSS
 st.markdown(f"""
     <style>
-        body {{ background-color: {{BG_COLOR}}; }}
-        .main {{ background-color: {{BG_COLOR}}; }}
-        h1 {{ color: {{TEXT_COLOR}}; text-align: center; }}
-        h2 {{ color: {{TEXT_COLOR}}; }}
-        .stButton>button {{ background-color: {{ACCENT_COLOR}}; color: white; border-radius: 5px; }}
+        body {{ background-color: {BG_COLOR}; }}
+        .main {{ background-color: {BG_COLOR}; }}
+        h1 {{ color: {TEXT_COLOR}; text-align: center; }}
+        h2 {{ color: {TEXT_COLOR}; }}
+        .stButton>button {{ background-color: {ACCENT_COLOR}; color: white; border-radius: 5px; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -98,7 +98,7 @@ if aluno_selecionado_url:
     aluno_nome = aluno_selecionado_url
     if aluno_nome in st.session_state.alunos_pilares:
         st.title(f"🎯 Sua Evolução por Pilares")
-        st.markdown(f"<h3 style='text-align: center; color: {{SECONDARY_COLOR}};'>{{aluno_nome}}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='text-align: center; color: {SECONDARY_COLOR};'>{aluno_nome}</h3>", unsafe_allow_html=True)
         
         pontos = st.session_state.alunos_pilares[aluno_nome]
         if pontos:
@@ -114,7 +114,7 @@ if aluno_selecionado_url:
                     name=p[0],
                     line=dict(color=color, width=4),
                     marker=dict(size=10),
-                    fillcolor=f"rgba{{tuple(list(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + [0.1])}}"
+                    fillcolor=f"rgba{tuple(list(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + [0.1])}"
                 ))
             
             fig.update_layout(
@@ -131,7 +131,7 @@ if aluno_selecionado_url:
             )
             st.plotly_chart(fig, use_container_width=True)
     else:
-        st.error(f"Aluno '{{aluno_nome}}' não encontrado.")
+        st.error(f"Aluno '{aluno_nome}' não encontrado.")
     
     if st.button("⬅️ Voltar para Gestão"):
         st.query_params.clear()
@@ -161,9 +161,9 @@ st.markdown("---")
 # Listagem e Edição
 if st.session_state.alunos_pilares:
     for aluno in st.session_state.alunos_pilares:
-        with st.expander(f"👤 {{aluno}}", expanded=False):
+        with st.expander(f"👤 {aluno}", expanded=False):
             base_url = "https://mapa-alunos-calor.streamlit.app/"
-            link_aluno = f"{{base_url}}?aluno={{urllib.parse.quote(aluno )}}"
+            link_aluno = f"{base_url}?aluno={urllib.parse.quote(aluno )}"
             st.markdown(f"**🔗 Link Único do Aluno:**")
             st.code(link_aluno, language="text")
             st.divider()
@@ -171,13 +171,13 @@ if st.session_state.alunos_pilares:
             pontos = st.session_state.alunos_pilares[aluno]
             for i, p in enumerate(pontos):
                 c1, c2, c3, c4, c5, c6 = st.columns([2, 1, 1, 1, 1, 0.5])
-                with c1: n_nome = st.text_input(f"Nome", value=p[0], key=f"n_{{aluno}}_{{i}}", label_visibility="collapsed")
-                with c2: n_c = st.number_input(f"C", 0.0, 5.0, float(p[1]), 0.5, key=f"c_{{aluno}}_{{i}}", label_visibility="collapsed")
-                with c3: n_im = st.number_input(f"I", 0.0, 5.0, float(p[2]), 0.5, key=f"i_{{aluno}}_{{i}}", label_visibility="collapsed")
-                with c4: n_v = st.number_input(f"V", 0.0, 5.0, float(p[3]), 0.5, key=f"v_{{aluno}}_{{i}}", label_visibility="collapsed")
-                with c5: n_co = st.number_input(f"Co", 0.0, 5.0, float(p[4]), 0.5, key=f"co_{{aluno}}_{{i}}", label_visibility="collapsed")
+                with c1: n_nome = st.text_input(f"Nome", value=p[0], key=f"n_{aluno}_{i}", label_visibility="collapsed")
+                with c2: n_c = st.number_input(f"C", 0.0, 5.0, float(p[1]), 0.5, key=f"c_{aluno}_{i}", label_visibility="collapsed")
+                with c3: n_im = st.number_input(f"I", 0.0, 5.0, float(p[2]), 0.5, key=f"i_{aluno}_{i}", label_visibility="collapsed")
+                with c4: n_v = st.number_input(f"V", 0.0, 5.0, float(p[3]), 0.5, key=f"v_{aluno}_{i}", label_visibility="collapsed")
+                with c5: n_co = st.number_input(f"Co", 0.0, 5.0, float(p[4]), 0.5, key=f"co_{aluno}_{i}", label_visibility="collapsed")
                 with c6: 
-                    if st.button("🗑️", key=f"del_{{aluno}}_{{i}}"):
+                    if st.button("🗑️", key=f"del_{aluno}_{i}"):
                         st.session_state.alunos_pilares[aluno].pop(i)
                         salvar_dados_github(st.session_state.alunos_pilares)
                         st.rerun()
@@ -188,13 +188,13 @@ if st.session_state.alunos_pilares:
             
             st.write("**Adicionar Avaliação**")
             a1, a2, a3, a4, a5, a6 = st.columns([2, 1, 1, 1, 1, 0.5])
-            with a1: a_nome = st.text_input("Texto", placeholder="Ex: Pitch", key=f"an_{{aluno}}")
-            with a2: a_c = st.number_input("C", 0.0, 5.0, 2.5, 0.5, key=f"ac_{{aluno}}")
-            with a3: a_im = st.number_input("I", 0.0, 5.0, 2.5, 0.5, key=f"ai_{{aluno}}")
-            with a4: a_v = st.number_input("V", 0.0, 5.0, 2.5, 0.5, key=f"av_{{aluno}}")
-            with a5: a_co = st.number_input("Co", 0.0, 5.0, 2.5, 0.5, key=f"aco_{{aluno}}")
+            with a1: a_nome = st.text_input("Texto", placeholder="Ex: Pitch", key=f"an_{aluno}")
+            with a2: a_c = st.number_input("C", 0.0, 5.0, 2.5, 0.5, key=f"ac_{aluno}")
+            with a3: a_im = st.number_input("I", 0.0, 5.0, 2.5, 0.5, key=f"ai_{aluno}")
+            with a4: a_v = st.number_input("V", 0.0, 5.0, 2.5, 0.5, key=f"av_{aluno}")
+            with a5: a_co = st.number_input("Co", 0.0, 5.0, 2.5, 0.5, key=f"aco_{aluno}")
             with a6:
-                if st.button("✅", key=f"ab_{{aluno}}"):
+                if st.button("✅", key=f"ab_{aluno}"):
                     st.session_state.alunos_pilares[aluno].append((a_nome if a_nome else "Novo", a_c, a_im, a_v, a_co))
                     salvar_dados_github(st.session_state.alunos_pilares)
                     st.rerun()
