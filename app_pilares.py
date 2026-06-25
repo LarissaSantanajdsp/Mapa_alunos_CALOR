@@ -212,4 +212,4 @@ if st.session_state.alunos_pilares:
 
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: #4E2C1C; font-size: 12px;'>🎓 Movimento Calor | Gestão de Pilares Permanente</div>", unsafe_allow_html=True)
-Para criar PPTs - Manus
+
