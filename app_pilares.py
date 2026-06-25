@@ -26,6 +26,7 @@ GITHUB_USER = "LarissaSantanajdsp"
 GITHUB_REPO = "Mapa_alunos_CALOR"
 DATA_FILE_PATH = "dados_alunos.json"
 
+# Tenta pegar o token dos Secrets do Streamlit
 try:
     GITHUB_TOKEN = st.secrets["GITHUB_TOKEN"]
 except:
@@ -34,40 +35,62 @@ except:
 def carregar_dados_github():
     if not GITHUB_TOKEN:
         return {}
+    
     url = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/contents/{DATA_FILE_PATH}"
     headers = {"Authorization": f"token {GITHUB_TOKEN}"}
+    
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             content = response.json()
             decoded_data = base64.b64decode(content['content']).decode('utf-8')
             return json.loads(decoded_data)
-    except:
-        pass
+        elif response.status_code == 404:
+            return {} # Arquivo ainda não existe
+    except Exception as e:
+        st.sidebar.error(f"Erro ao carregar: {str(e)}")
     return {}
 
 def salvar_dados_github(dados):
     if not GITHUB_TOKEN:
         return False
+    
     url = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/contents/{DATA_FILE_PATH}"
     headers = {"Authorization": f"token {GITHUB_TOKEN}"}
+    
+    # Pega o SHA do arquivo atual para poder atualizar
     sha = None
     get_response = requests.get(url, headers=headers)
     if get_response.status_code == 200:
         sha = get_response.json()['sha']
+    
     content_json = json.dumps(dados, ensure_ascii=False, indent=2)
     encoded_content = base64.b64encode(content_json.encode('utf-8')).decode('utf-8')
-    payload = {"message": "Atualização automática de dados dos alunos", "content": encoded_content}
-    if sha: payload["sha"] = sha
-    requests.put(url, headers=headers, json=payload)
-    return True
+    
+    payload = {
+        "message": "Atualização automática de dados dos alunos",
+        "content": encoded_content
+    }
+    if sha:
+        payload["sha"] = sha
+        
+    put_response = requests.put(url, headers=headers, json=payload)
+    
+    if put_response.status_code in [200, 201]:
+        return True
+    else:
+        st.sidebar.error(f"Erro ao salvar: {put_response.status_code}")
+        return False
 
+# Inicializar dados
 if 'alunos_pilares' not in st.session_state:
     st.session_state.alunos_pilares = carregar_dados_github()
 
+# --- Lógica de Parâmetros de URL ---
 query_params = st.query_params
 aluno_selecionado_url = query_params.get("aluno", None)
 
+# Estilos CSS
 st.markdown(f"""
     <style>
         body {{ background-color: {BG_COLOR}; }}
@@ -131,7 +154,7 @@ def criar_grafico_radar(aluno_nome, pontos):
         paper_bgcolor=BG_COLOR,
         plot_bgcolor=BG_COLOR,
         margin=dict(l=80, r=150, t=100, b=50),
-        dragmode='zoom' # Ativa o modo de zoom por padrão
+        dragmode='zoom'
     )
     return fig
 
@@ -144,7 +167,6 @@ if aluno_selecionado_url:
         if pontos:
             fig = criar_grafico_radar(aluno_nome, pontos)
             st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': True, 'scrollZoom': True})
-            st.info("💡 Use as ferramentas no topo do gráfico para dar zoom, resetar a visão ou baixar a imagem.")
     else:
         st.error(f"Aluno '{aluno_nome}' não encontrado.")
     
@@ -157,9 +179,20 @@ if aluno_selecionado_url:
 st.title("🎯 Gestão de Pilares - Movimento Calor")
 st.markdown("---")
 
-if not GITHUB_TOKEN:
-    st.warning("⚠️ Configure o GITHUB_TOKEN nos Secrets para salvar permanentemente.")
+# Sidebar com Diagnóstico
+with st.sidebar:
+    st.header("⚙️ Configurações")
+    if GITHUB_TOKEN:
+        st.success("✅ Token do GitHub detectado.")
+    else:
+        st.error("❌ Token do GitHub NÃO detectado nos Secrets.")
+        st.info("Adicione GITHUB_TOKEN nos Secrets do Streamlit Cloud.")
+    
+    if st.button("🔄 Sincronizar Dados"):
+        st.session_state.alunos_pilares = carregar_dados_github()
+        st.rerun()
 
+# Entrada de Alunos
 col1, col2 = st.columns([2, 1])
 with col1:
     novo_aluno = st.text_input("Nome do Aluno:", placeholder="Ex: Leandro Souza")
@@ -167,11 +200,15 @@ with col2:
     if st.button("➕ Adicionar Aluno"):
         if novo_aluno and novo_aluno not in st.session_state.alunos_pilares:
             st.session_state.alunos_pilares[novo_aluno] = []
-            salvar_dados_github(st.session_state.alunos_pilares)
-            st.rerun()
+            if salvar_dados_github(st.session_state.alunos_pilares):
+                st.success(f"Aluno {novo_aluno} salvo com sucesso!")
+                st.rerun()
+            else:
+                st.error("Falha ao salvar no GitHub. Verifique o Token.")
 
 st.markdown("---")
 
+# Listagem e Edição
 if st.session_state.alunos_pilares:
     for aluno in st.session_state.alunos_pilares:
         with st.expander(f"👤 {aluno}", expanded=False):
