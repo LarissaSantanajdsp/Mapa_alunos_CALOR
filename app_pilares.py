@@ -5,6 +5,8 @@ import json
 import requests
 import base64
 import urllib.parse
+from PIL import Image
+from io import BytesIO
 
 # Configuração da página
 st.set_page_config(page_title="Avaliação por Pilares", layout="wide", initial_sidebar_state="expanded")
@@ -21,19 +23,29 @@ CORES_CALOR_REFINADA = [
     '#C62828', '#FF8F00', '#6A1B9A', '#AD1457', '#37474F'
 ]
 
-# URL do Logo da CALOR (Hospedado de forma segura)
-LOGO_URL = "https://raw.githubusercontent.com/LarissaSantanajdsp/Mapa_alunos_CALOR/main/Colorlogo-nobackground(1).jpg"
-
 # --- Configurações do GitHub (Banco de Dados) ---
 GITHUB_USER = "LarissaSantanajdsp"
 GITHUB_REPO = "Mapa_alunos_CALOR"
 DATA_FILE_PATH = "dados_alunos.json"
+LOGO_FILE_NAME = "Colorlogo-nobackground(1).jpg"
 BASE_URL = "https://mapaalunoscalor-fozyfgucjj7skfkjfscwyt.streamlit.app/"
 
 try:
     GITHUB_TOKEN = st.secrets["GITHUB_TOKEN"]
 except:
     GITHUB_TOKEN = None
+
+def carregar_logo_github():
+    if not GITHUB_TOKEN: return None
+    url = f"https://api.github.com/repos/{GITHUB_USER}/{GITHUB_REPO}/contents/{LOGO_FILE_NAME}"
+    headers = {"Authorization": f"token {GITHUB_TOKEN}"}
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            content = response.json()
+            return content['content'] # Retorna o base64 direto do GitHub
+    except: pass
+    return None
 
 def carregar_dados_github():
     if not GITHUB_TOKEN: return {}
@@ -92,16 +104,18 @@ def criar_grafico_radar(aluno_nome, pontos):
             fillcolor=f"rgba{tuple(list(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + [0.1])}"
         ))
     
-    # Adicionar Logo da CALOR via URL
-    fig.add_layout_image(
-        dict(
-            source=LOGO_URL,
-            xref="paper", yref="paper",
-            x=1.1, y=-0.1,
-            sizex=0.25, sizey=0.25,
-            xanchor="right", yanchor="bottom"
+    # Carregar Logo do GitHub
+    logo_base64 = carregar_logo_github()
+    if logo_base64:
+        fig.add_layout_image(
+            dict(
+                source=f"data:image/jpeg;base64,{logo_base64}",
+                xref="paper", yref="paper",
+                x=1.1, y=-0.1,
+                sizex=0.25, sizey=0.25,
+                xanchor="right", yanchor="bottom"
+            )
         )
-    )
 
     fig.update_layout(
         title=dict(text=f"Mapa de Evolução: {aluno_nome}", x=0.5, y=0.95, font=dict(size=24, color=TEXT_COLOR, family="Arial Black")),
