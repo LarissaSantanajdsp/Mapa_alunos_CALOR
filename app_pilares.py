@@ -1,36 +1,3 @@
-
-/
-
-Compartilhar
-Um ajuste: no link unico de aluno existe um botão que permite ao aluno entrar na pagina de gestão. remova esse botão,. nao quero que cada aluno possa voltar a pagina de gestão e ver o desempenho de outros. 
-Lite
-Você tem toda razão, a privacidade dos dados é fundamental. Vou remover imediatamente o botão "Voltar para Gestão" da visualização do aluno.
-Com essa alteração:
-Privacidade Total: O aluno verá apenas o seu próprio gráfico e não terá nenhum caminho ou botão para acessar a área de gestão onde estão os outros alunos.
-Foco no Resultado: A página do aluno será uma vitrine limpa e exclusiva da evolução dele.
-Vou preparar o código atualizado agora mesmo. Um momento.
-Lite
-Ajuste de privacidade realizado! Removi o botão "Voltar para Gestão" da página do aluno.
-O que mudou:
-Privacidade Garantida: Agora, quando o aluno acessa o link dele, ele vê apenas o gráfico e não tem nenhum botão ou link que permita voltar para a área de gestão.
-Segurança: Isso impede que um aluno veja acidentalmente o desempenho de outros mentorados.
-Como atualizar:
-Abra o arquivo anexo app_pilares_privacidade_total.txt e copie todo o conteúdo.
-No seu GitHub, edite o arquivo app_pilares.py, apague tudo e cole este novo código.
-Clique em Commit changes.
-Agora o sistema está 100% seguro e profissional para suas mentorias. Pode testar e me confirmar! Fico à disposição.
-app_pilares_privacidade_total.txt
-Texto · 9.15 KB
-Ver todos os arquivos nesta tarefa
-Tarefa concluída
-Como foi este resultado?
-import streamlit as stimport plotly.graph_objects as goimport pandas as pdimport jsonimport requestsimport base64import urllib.parsefrom PIL import Imagefrom io import BytesIO# Configuração da páginast.set_page_config(page_title="Avaliação por Pilares", 
-
-
-
-
-Manus is an AI Agent and can make mistakes. Please double-check before use.
-app_pilares_privacidade_total.txt
 import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
@@ -175,7 +142,6 @@ if aluno_selecionado_url:
             fig = criar_grafico_radar(aluno_nome, pontos)
             st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': True, 'scrollZoom': True})
     else: st.error(f"Aluno '{aluno_nome}' não encontrado.")
-    # BOTÃO DE VOLTAR REMOVIDO PARA PRIVACIDADE
     st.stop()
 
 st.title("🎯 Gestão de Pilares - Movimento Calor")
@@ -242,4 +208,3 @@ if st.session_state.alunos_pilares:
 
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: #4E2C1C; font-size: 12px;'>🎓 Movimento Calor | Gestão de Pilares Permanente</div>", unsafe_allow_html=True)
-Para criar PPTs - Manus
