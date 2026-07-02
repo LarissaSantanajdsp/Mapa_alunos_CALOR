@@ -34,23 +34,11 @@ GITHUB_REPO = "Mapa_alunos_CALOR"
 DATA_FILE_PATH = "dados_alunos.json"
 LOGO_FILE_NAME = "Colorlogo-nobackground(1).jpg"
 BASE_URL = "https://mapaalunoscalor-fozyfgucjj7skfkjfscwyt.streamlit.app/"
-LOGO_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/main/{LOGO_FILE_NAME}"
 
 try:
     GITHUB_TOKEN = st.secrets["GITHUB_TOKEN"]
 except:
     GITHUB_TOKEN = None
-
-# Injeção de Meta Tags para Preview no WhatsApp/Redes Sociais
-st.markdown(f"""
-    <head>
-        <meta property="og:title" content="Mapa de Evolução - Movimento Calor" />
-        <meta property="og:description" content="Visualize sua evolução e desempenho nos pilares da mentoria." />
-        <meta property="og:image" content="{LOGO_URL}" />
-        <meta property="og:url" content="{BASE_URL}" />
-        <meta name="twitter:card" content="summary_large_image">
-    </head>
-""", unsafe_allow_html=True)
 
 def carregar_logo_github():
     if not GITHUB_TOKEN: return None
@@ -150,6 +138,11 @@ def criar_grafico_radar(aluno_nome, pontos):
     )
     return fig
 
+# Mostrar Logo no Topo para Preview do WhatsApp
+logo_base64_topo = carregar_logo_github()
+if logo_base64_topo:
+    st.image(f"data:image/jpeg;base64,{logo_base64_topo}", width=150)
+
 if aluno_selecionado_url:
     aluno_nome = aluno_selecionado_url
     if aluno_nome in st.session_state.alunos_pilares:
@@ -165,6 +158,8 @@ st.title("🎯 Gestão de Pilares - Movimento Calor")
 st.markdown("---")
 
 with st.sidebar:
+    if logo_base64_topo:
+        st.image(f"data:image/jpeg;base64,{logo_base64_topo}", width=100)
     st.header("⚙️ Configurações")
     if GITHUB_TOKEN: st.success("✅ Token do GitHub detectado.")
     else: st.error("❌ Token do GitHub NÃO detectado.")
