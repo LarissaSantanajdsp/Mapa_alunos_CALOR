@@ -167,11 +167,19 @@ with col2:
 st.markdown("---")
 
 if st.session_state.alunos_pilares:
-    for aluno in st.session_state.alunos_pilares:
+    for aluno in list(st.session_state.alunos_pilares.keys()):
         with st.expander(f"👤 {aluno}", expanded=False):
-            link_aluno = f"{BASE_URL}?aluno={urllib.parse.quote(aluno)}"
-            st.markdown(f"**🔗 Link Único do Aluno:**")
-            st.code(link_aluno, language="text")
+            c_header1, c_header2 = st.columns([4, 1])
+            with c_header1:
+                link_aluno = f"{BASE_URL}?aluno={urllib.parse.quote(aluno)}"
+                st.markdown(f"**🔗 Link Único do Aluno:**")
+                st.code(link_aluno, language="text")
+            with c_header2:
+                if st.button("🗑️ Excluir Aluno", key=f"del_aluno_{aluno}"):
+                    del st.session_state.alunos_pilares[aluno]
+                    salvar_dados_github(st.session_state.alunos_pilares)
+                    st.rerun()
+            
             st.divider()
             pontos = st.session_state.alunos_pilares[aluno]
             for i, p in enumerate(pontos):
@@ -182,7 +190,7 @@ if st.session_state.alunos_pilares:
                 with c4: n_v = st.number_input(f"V", 0.0, 5.0, float(p[3]), 0.5, key=f"v_{aluno}_{i}", label_visibility="collapsed")
                 with c5: n_co = st.number_input(f"Co", 0.0, 5.0, float(p[4]), 0.5, key=f"co_{aluno}_{i}", label_visibility="collapsed")
                 with c6: 
-                    if st.button("🗑️", key=f"del_{aluno}_{i}"):
+                    if st.button("❌", key=f"del_entry_{aluno}_{i}"):
                         st.session_state.alunos_pilares[aluno].pop(i)
                         salvar_dados_github(st.session_state.alunos_pilares)
                         st.rerun()
