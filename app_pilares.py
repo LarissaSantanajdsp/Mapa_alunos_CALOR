@@ -9,7 +9,12 @@ from PIL import Image
 from io import BytesIO
 
 # Configuração da página
-st.set_page_config(page_title="Avaliação por Pilares", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(
+    page_title="Mapa de Evolução - Movimento Calor",
+    page_icon="🎯",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # Estilos do Movimento Calor
 BG_COLOR = '#F2F0E4'
@@ -29,11 +34,23 @@ GITHUB_REPO = "Mapa_alunos_CALOR"
 DATA_FILE_PATH = "dados_alunos.json"
 LOGO_FILE_NAME = "Colorlogo-nobackground(1).jpg"
 BASE_URL = "https://mapaalunoscalor-fozyfgucjj7skfkjfscwyt.streamlit.app/"
+LOGO_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/main/{LOGO_FILE_NAME}"
 
 try:
     GITHUB_TOKEN = st.secrets["GITHUB_TOKEN"]
 except:
     GITHUB_TOKEN = None
+
+# Injeção de Meta Tags para Preview no WhatsApp/Redes Sociais
+st.markdown(f"""
+    <head>
+        <meta property="og:title" content="Mapa de Evolução - Movimento Calor" />
+        <meta property="og:description" content="Visualize sua evolução e desempenho nos pilares da mentoria." />
+        <meta property="og:image" content="{LOGO_URL}" />
+        <meta property="og:url" content="{BASE_URL}" />
+        <meta name="twitter:card" content="summary_large_image">
+    </head>
+""", unsafe_allow_html=True)
 
 def carregar_logo_github():
     if not GITHUB_TOKEN: return None
