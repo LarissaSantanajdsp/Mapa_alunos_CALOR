@@ -5,8 +5,6 @@ import json
 import requests
 import base64
 import urllib.parse
-from PIL import Image
-from io import BytesIO
 
 # Configuração da página
 st.set_page_config(
@@ -79,11 +77,12 @@ def salvar_dados_github(dados):
     requests.put(url, headers=headers, json=payload)
     return True
 
+# Inicialização de dados
 if 'alunos_pilares' not in st.session_state:
     st.session_state.alunos_pilares = carregar_dados_github()
 
-query_params = st.query_params
-aluno_selecionado_url = query_params.get("aluno", None)
+# Captura de parâmetros de URL de forma compatível
+aluno_selecionado_url = st.query_params.get("aluno", None)
 
 st.markdown(f"""
     <style>
@@ -138,31 +137,33 @@ def criar_grafico_radar(aluno_nome, pontos):
     )
     return fig
 
-# Mostrar Logo no Topo para Preview do WhatsApp
-logo_base64_topo = carregar_logo_github()
-if logo_base64_topo:
-    st.image(f"data:image/jpeg;base64,{logo_base64_topo}", width=150)
+# --- Lógica de Exibição ---
+logo_base64_img = carregar_logo_github()
 
 if aluno_selecionado_url:
     aluno_nome = aluno_selecionado_url
     if aluno_nome in st.session_state.alunos_pilares:
+        if logo_base64_img:
+            st.image(f"data:image/jpeg;base64,{logo_base64_img}", width=150)
         st.title(f"🎯 Sua Evolução por Pilares")
         pontos = st.session_state.alunos_pilares[aluno_nome]
         if pontos:
             fig = criar_grafico_radar(aluno_nome, pontos)
             st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': True, 'scrollZoom': True})
-    else: st.error(f"Aluno '{aluno_nome}' não encontrado.")
+    else:
+        st.error(f"Aluno '{aluno_nome}' não encontrado.")
     st.stop()
 
+# --- Área de Gestão ---
 st.title("🎯 Gestão de Pilares - Movimento Calor")
 st.markdown("---")
 
 with st.sidebar:
-    if logo_base64_topo:
-        st.image(f"data:image/jpeg;base64,{logo_base64_topo}", width=100)
+    if logo_base64_img:
+        st.image(f"data:image/jpeg;base64,{logo_base64_img}", width=100)
     st.header("⚙️ Configurações")
-    if GITHUB_TOKEN: st.success("✅ Token do GitHub detectado.")
-    else: st.error("❌ Token do GitHub NÃO detectado.")
+    if GITHUB_TOKEN: st.success("✅ Conectado ao GitHub")
+    else: st.error("❌ Erro de Conexão")
     if st.button("🔄 Sincronizar Dados"):
         st.session_state.alunos_pilares = carregar_dados_github()
         st.rerun()
