@@ -169,7 +169,7 @@ with st.sidebar:
         st.rerun()
 
 col1, col2 = st.columns([2, 1])
-with col1: novo_aluno = st.text_input("Nome do Aluno:", placeholder="Ex: Leandro Souza")
+with col1: novo_aluno = st.text_input("Nome do Aluno:", placeholder="Escreva aqui o nome do aluno")
 with col2:
     if st.button("➕ Adicionar Aluno"):
         if novo_aluno and novo_aluno not in st.session_state.alunos_pilares:
