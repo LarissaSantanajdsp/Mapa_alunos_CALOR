@@ -207,4 +207,25 @@ if st.session_state.alunos_pilares:
                         st.session_state.alunos_pilares[aluno].pop(i)
                         salvar_dados_github(st.session_state.alunos_pilares)
                         st.rerun()
-                if n_nome != p[0] or n_c != p[1] or n_im != p
+                if n_nome != p[0] or n_c != p[1] or n_im != p[2] or n_v != p[3] or n_co != p[4]:
+                    st.session_state.alunos_pilares[aluno][i] = (n_nome, n_c, n_im, n_v, n_co)
+                    salvar_dados_github(st.session_state.alunos_pilares)
+            
+            st.write("**Adicionar Avaliação**")
+            a1, a2, a3, a4, a5, a6 = st.columns([2, 1, 1, 1, 1, 0.5])
+            with a1: a_nome = st.text_input("Texto", placeholder="Ex: Pitch", key=f"an_{aluno}")
+            with a2: a_c = st.number_input("C", 0.0, 5.0, 2.5, 0.5, key=f"ac_{aluno}")
+            with a3: a_im = st.number_input("I", 0.0, 5.0, 2.5, 0.5, key=f"ai_{aluno}")
+            with a4: a_v = st.number_input("V", 0.0, 5.0, 2.5, 0.5, key=f"av_{aluno}")
+            with a5: a_co = st.number_input("Co", 0.0, 5.0, 2.5, 0.5, key=f"aco_{aluno}")
+            with a6: 
+                if st.button("✅", key=f"ab_{aluno}"):
+                    st.session_state.alunos_pilares[aluno].append((a_nome if a_nome else "Novo", a_c, a_im, a_v, a_co))
+                    salvar_dados_github(st.session_state.alunos_pilares)
+                    st.rerun()
+            if pontos:
+                fig = criar_grafico_radar(aluno, pontos)
+                st.plotly_chart(fig, use_container_width=True)
+
+st.markdown("---")
+st.markdown("<div style='text-align: center; color: #4E2C1C; font-size: 12px;'>🎓 Movimento Calor | Gestão de Pilares Permanente</div>", unsafe_allow_html=True)
